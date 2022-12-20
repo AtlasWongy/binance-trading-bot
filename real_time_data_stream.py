@@ -12,6 +12,9 @@ import sys
 def on_message(ws, message):
     response = json.loads(message)
     print(response)
+    time_received = datetime.datetime.fromtimestamp(response['E']/1e3) 
+    print(" ")
+    print(f'The time received: {time_received}')
     print("-------------------------------------")
 
 def on_error(ws, error):
