@@ -2,6 +2,7 @@ import json
 import websockets
 import asyncio
 import requests
+import time
 
 f = open('config.json')
 config = json.load(f)
@@ -32,20 +33,18 @@ async def main():
     while True:
         try:
             async with websockets.connect(futures_connection_url) as ws:
-                payload = {
-                    "apiKey": api_key,
-                    "secret": secret_key
-                }
-                await ws.send(json.dumps(payload))
+                # payload = {
+                #     "apiKey": api_key,
+                #     "secret": secret_key
+                # }
+                # await ws.send("Let me in")
 
                 # Keep the connection alive
                 asyncio.create_task(ping())
-                while ws.closed == False:
-                    response = await ws.recv()
-                    message = json.loads(response)
-                    print(message)
-                
 
+                response = await ws.recv()
+                print(response)
+                
         except websockets.exceptions.ConnectionClosed:
             continue
 
