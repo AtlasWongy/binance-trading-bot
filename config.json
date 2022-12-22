@@ -1,5 +1,8 @@
 {
-    "api_key": "Ve9WEyIJ2bPoWtK1tL69pp1zfvIMGqsEZtwH1XMk1NC6JmFE2ePd4EuPAypSuqw7",
-    "secure_key": "Ve9WEyIJ2bPoWtK1tL69pp1zfvIMGqsEZtwH1XMk1NC6JmFE2ePd4EuPAypSuqw7",
-    "currency": "ethbusd"
+    "api_key": "WNBzXKum6iEEwlowUozKd1EIR1U9AS7gLJd1IHL7diuEtuHXpuZOwqH7S9AAbT7y",
+    "secure_key": "fj420Ni0CsyOV5cQMLRbYHDp9vnYztamedGoL7uD3OFmKVcXU47ofMjUU5UIbCw3",
+    "symbol": "ethbusd",
+    "base_url": "wss://fstream.binance.com/ws",
+    "api_key_y": "RMxh59NvuPTbXBPwah2WgZUhXhT3QFhYJ7N7bqTj4QcyTqHKGli8MJYNekBRed68",
+    "secure_key_y": "ybebv7zM4MaulrF6cHJRLPRKqJhSxRvBcnaMT0yJkeXBq1HG7CJVV8BgVGwhihxJ"
 }

@@ -1,66 +1,64 @@
 import asyncio
 import json
-import time
-import websocket
-from binance import AsyncClient, BinanceSocketManager
-import datetime
-import timeit
-import ast
-import os
-import sys
+import websockets
+from datetime import datetime, timezone
 
-def on_message(ws, message):
-    response = json.loads(message)
-    print(response)
-    time_received = datetime.datetime.fromtimestamp(response['E']/1e3) 
-    print(" ")
-    print(f'The time received: {time_received}')
-    print("-------------------------------------")
+# Set the base URL for the Binance API
+base_url = "wss://fstream.binance.com/ws"
 
-def on_error(ws, error):
-    print(error)
+# Set the symbol for the commodity
+symbol = "ETHBUSD"
 
-def on_close(ws, status_code, msg):
-    print("WebSocket connection closed")
-    # Un-comment line below to restart python script
-    # os.execv(sys.executable, [sys.executable] + sys.argv)
+# Set the ping interval in seconds
+ping_interval = 300
 
-if __name__ == "__main__":
-    f = open('config.json')
-    config = json.load(f)
-    ws = websocket.WebSocketApp(f"wss://stream.binance.com/ws/{config['currency']}@kline_5m",
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close,
-                            )
-    ws.run_forever(ping_interval=300)
+async def ping(websocket):
+  while True:
+    # Send a pong frame every 5 minutes to keep the connection alive
+    await asyncio.sleep(ping_interval)
+    await websocket.ping()
+   
+async def get_current_price(config):
+  # Connect to the websocket endpoint
+  endpoint = f"{base_url}/{symbol.lower()}@kline_5m"
+  while True:
+    try:
+      async with websockets.connect(endpoint) as websocket:
+        # Send the API key and secret to authenticate the connection
+        payload = {
+          "apiKey": config['api_key'],
+          "secret": config['secure_key']
+        }
+        await websocket.send(json.dumps(payload))
 
+        # Create an asyncio task to send a pong frame every 5 minutes
+        asyncio.create_task(ping(websocket))
 
-# f = open('config.json')
-# config = json.load(f)
-# stream_k_lines(config['currency'], '5m')
+        # Continuously receive data from the websocket
+        async for message in websocket:
+          try:
+            data = json.loads(message)
+            current_price = data['k']['c']
+            print(f"Current price of {symbol}: {current_price} ({datetime.now()} - {datetime.now(timezone.utc).timestamp()*1000 - data['E']})")
+            if data['k']['x']:
+              candlestick_data = data['k']
+              print(f"5 minute candlestick data: {candlestick_data}")
+          except KeyError:
+            print("Faulty data received from API")
+            continue
 
-# async def main():
-#     client = await AsyncClient.create()
-#     bm = BinanceSocketManager(client, user_timeout = 60)
-#     f = open('config.json')
-#     config = json.load(f)
-#     ts = bm.kline_socket(config['currency'], AsyncClient.KLINE_INTERVAL_5MINUTE) #Change here
-#     async with ts as tscm:
-#         while True:
-#             start = time.perf_counter()
-#             res = await tscm.recv()
-#             end = time.perf_counter()
-            
-#             print("---------------------------------------------")
-            
-#             print(res)
-#             print(" ")
-#             print(f"API request took {end - start:.2f} seconds")
-            
+        # Connection was closed by the server
+        print("Websocket connection lost, attempting to reconnect...")
+    except websockets.exceptions.ConnectionClosed:
+      # Connection was closed, try to reconnect
+      continue
 
-#     await client.close_connection()
+async def main():
+  # Get the current price
+  f = open('config.json')
+  config = json.load(f)
+  await get_current_price(config)
 
-# if __name__ == "__main__":
-#     loop = asyncio.get_event_loop()
-#     loop.run_until_complete(main())
+# Run the main function
+asyncio.run(main())
+

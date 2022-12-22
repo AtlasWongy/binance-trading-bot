@@ -1,34 +1,89 @@
-from binance.client import Client
 import json
+import websockets
+import asyncio
 import requests
-import pandas as pd
 
 f = open('config.json')
 config = json.load(f)
 
-client = Client(config["api_key"], config["secure_key"])
-print("Connected to Binance successfully....")
+# Load configs
+api_key = config["api_key_y"]
+secret_key = config["secure_key_y"]
+symbol = config["symbol"]
 
-klines = client.get_historical_klines(config["currency"], Client.KLINE_INTERVAL_5MINUTE, "1 day ago UTC")
+# Set the base URL for the Binance API
+BINANCE_FUTURES_END_POINT = "https://fapi.binance.com/fapi/v1/listenKey"
+FUTURES_STREAM_END_POINT_1 = "wss://fstream.binance.com"
 
-klines_dataframe = pd.DataFrame(
-    klines, 
-    columns=[
-        'Open Time', 
-        'Open', 
-        'High', 
-        'Low', 
-        'Close', 
-        'Volume',
-        'Close Time',
-        'Quote Asset',
-        'Volume',
-        'Number of Trades',
-        'Taker buy base asset volume',
-        'Taker buy quote asset volume'
-    ])
+# Ping the Connection Alive
+async def ping():
+    while True:
+        await asyncio.sleep(1800)
+        await requests.put("https://fapi.binance.com/fapi/v1/listenKey")
 
-print(klines_dataframe)
+def get_listen_key_by_REST(api_key):
+    response = requests.post(url=BINANCE_FUTURES_END_POINT, headers={'X-MBX-APIKEY': api_key})
+    return response.json()['listenKey']
+
+async def main():
+    listen_key = get_listen_key_by_REST(api_key)
+    futures_connection_url = f"{FUTURES_STREAM_END_POINT_1}/ws/{listen_key}"
+
+    while True:
+        try:
+            async with websockets.connect(futures_connection_url) as ws:
+                payload = {
+                    "apiKey": api_key,
+                    "secret": secret_key
+                }
+                await ws.send(json.dumps(payload))
+
+                # Keep the connection alive
+                asyncio.create_task(ping())
+                while ws.closed == False:
+                    response = await ws.recv()
+                    message = json.loads(response)
+                    print(message)
+                
+
+        except websockets.exceptions.ConnectionClosed:
+            continue
+
+asyncio.run(main())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Get the time current time stamp
+# current_timestamp = int(time.time() * 1000)
+
+# # Open a trade
+# def open_order():
+#     buy_order = client.futures_create_order(
+#         symbol = symbol,
+#         side = 'SELL',
+#         positionSide = 'LONG',
+#         type = 'stop_loss',
+#         timestamp = {
+#             'timestamp': current_timestamp
+#         },
+#         quantity = 10,
+#         price = 1215.00
+
+#     )
+
 
 
 
