@@ -2,7 +2,6 @@ import json
 import websockets
 import asyncio
 import requests
-import time
 
 f = open('config.json')
 config = json.load(f)
@@ -29,7 +28,7 @@ def get_listen_key_by_REST(api_key):
 async def main():
     listen_key = get_listen_key_by_REST(api_key)
     futures_connection_url = f"{FUTURES_STREAM_END_POINT_1}/ws/{listen_key}"
-
+    print(futures_connection_url)
     while True:
         try:
             async with websockets.connect(futures_connection_url) as ws:
