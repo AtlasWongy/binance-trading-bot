@@ -1,7 +1,9 @@
+from datetime import datetime, timezone
+from decision_handle import decision_handler
 import asyncio
 import json
 import websockets
-from datetime import datetime, timezone
+import sys
 
 # Set the base URL for the Binance API
 base_url = "wss://fstream.binance.com/ws"
@@ -40,8 +42,10 @@ async def get_current_price(config):
             data = json.loads(message)
             current_price = data['k']['c']
             print(f"Current price of {symbol}: {current_price} ({datetime.now()} - {datetime.now(timezone.utc).timestamp()*1000 - data['E']})")
+            await decision_handler(current_price=current_price, candlestick_data=data['k']['x'])
             if data['k']['x']:
               candlestick_data = data['k']
+              await decision_handler(current_price=candlestick_data, candlestick_data=data['k']['x'])
               print(f"5 minute candlestick data: {candlestick_data}")
           except KeyError:
             print("Faulty data received from API")

@@ -2,6 +2,7 @@ from binance.client import Client
 import asyncio
 import json
 import binance
+import sys
 
 # Load the configs
 f = open('config.json')
@@ -14,18 +15,27 @@ symbol = config['symbol']
 client = Client(api_key, secret_key)
 
 # Open order / positions array
-current_positions_array = []
+current_positions_array = [{}]
 
-async def decision_handler():
-    while True:
-        try:
-            asyncio.sleep(300)
-            position = await get_positions()
-            current_positions_array.pop()
-            current_positions_array.append(position)
-            print(current_positions_array)
-        except binance.exceptions.BinanceAPIException:
-            continue
+async def decision_handler(current_price, candlestick_data):
+    try:
+        print(current_price)
+        print(candlestick_data)
+        print("------------------")
+
+        if candlestick_data:
+            sys.exit("Send order to close")
+        elif current_price:
+            # Not sure what to do here
+            print("Close the trade")
+
+        position = await get_positions()
+        current_positions_array.pop()
+        current_positions_array.append(position)
+        print(current_positions_array)
+        return
+    except binance.exceptions.BinanceAPIException:
+        return
 
 async def get_positions():
     positions = client.futures_account()['positions']
